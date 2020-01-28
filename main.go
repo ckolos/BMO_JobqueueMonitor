@@ -62,6 +62,7 @@ func ParseMetrics(metrics []byte) (total int, errors int) {
 }
 
 func SendMetrics(total int, errors int) {
+  // TODO publish to localhost:8125 for statsd
 
 }
 

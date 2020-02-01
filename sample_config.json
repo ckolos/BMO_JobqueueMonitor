@@ -1,4 +1,4 @@
-# Rename this file to jqm.json once configured
+# Rename this file to jqm.json once configured and remove this line
 {
   "config": {
     "url": "put-bugzilla-url-here",

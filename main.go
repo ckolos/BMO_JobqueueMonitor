@@ -5,18 +5,28 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 )
 
+// Config file format
+// all fields are required
 type Config struct {
 	Jqm_config struct {
 		Url    string `json:"url"`
 		ApiKey string `json:"api_key"`
 		Path   string `json:"path"`
+		Prefix string `json:"prefix"`
+		Env    string `json:"env"`
 	} `json:"config"`
 }
 
+// BMO's jobqueue server responds with a JSON object
+// containing only total and errors
+// {"total": <int>, "errors": <int>}
 type JQResponse struct {
 	JQResponse struct {
 		Totals int `json:"total"`
@@ -60,16 +70,22 @@ func ParseMetrics(metrics []byte) (total int, errors int) {
 	return JQ.JQResponse.Totals, JQ.JQResponse.Errors
 }
 
-func SendMetrics(total int, errors int) {
-	// TODO publish to localhost:8125 for statsd
-
+func SendMetrics(total int, errors int, prefix string, env string) {
+	conn, err := net.Dial("udp", "localhost:8125")
+	if err != nil {
+		log.Fatal(err)
+	}
+	total_txt := []string{prefix, env, ".total:", strconv.Itoa(total), "|c"}
+	errors_txt := []string{prefix, env, ".errors:", strconv.Itoa(errors), "|c"}
+	fmt.Fprintf(conn, (strings.Join(total_txt, "") + "\n"))
+	fmt.Fprintf(conn, (strings.Join(errors_txt, "") + "\n"))
+	_ = conn.Close()
 }
 
 func main() {
-	config, _ := LoadConfig("jqm.json")
-	completeUrl := (config.Jqm_config.Url + config.Jqm_config.Path + config.Jqm_config.ApiKey)
+	conf, _ := LoadConfig("jqm.json")
+	completeUrl := (conf.Jqm_config.Url + conf.Jqm_config.Path + conf.Jqm_config.ApiKey)
 	returnedMetrics := QueryEndpoint(completeUrl)
 	totals, errors := ParseMetrics(returnedMetrics)
-
-	fmt.Printf("%d %d\n", totals, errors)
+	SendMetrics(totals, errors, conf.Jqm_config.Prefix, conf.Jqm_config.Env)
 }

@@ -1,0 +1,10 @@
+# Rename this file to jqm.json once configured
+{
+  "config": {
+    "url": "put-bugzilla-url-here",
+    "path": "put-path-to-the-jobqueue-api-endpoint-here",
+    "api_key": "put-api-key-here",
+    "prefix": "put-metric-prefix-here-with-trailing-..",
+    "env": "put-env-here"
+  }
+}
